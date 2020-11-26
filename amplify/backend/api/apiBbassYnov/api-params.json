@@ -1,0 +1,35 @@
+{
+    "paths": [
+        {
+            "name": "/upload",
+            "lambdaFunction": "lambdaupload",
+            "privacy": {
+                "open": true
+            },
+            "policyResourceName": "/upload"
+        }
+    ],
+    "resourceName": "apiBbassYnov",
+    "apiName": "apiBbassYnov",
+    "functionArns": [
+        {
+            "lambdaFunction": "lambdaupload"
+        }
+    ],
+    "privacy": {
+        "auth": 0,
+        "unauth": 0,
+        "authRoleName": "amplify-bbaas-dev-94023-authRole",
+        "unAuthRoleName": "amplify-bbaas-dev-94023-unauthRole"
+    },
+    "dependsOn": [
+        {
+            "category": "function",
+            "resourceName": "lambdaupload",
+            "attributes": [
+                "Name",
+                "Arn"
+            ]
+        }
+    ]
+}
