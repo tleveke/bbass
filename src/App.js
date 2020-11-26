@@ -19,7 +19,7 @@ import {
 import { CloudUpload, Face, Home } from '@material-ui/icons'
 import { makeStyles } from '@material-ui/core/styles'
 
-//import Reko from './Reko'
+import Reko from './Reko'
 import Upload from './Upload'
 
 const drawerWidth = 240
@@ -130,6 +130,12 @@ const App = () => {
                   </ListItemIcon>
                   <ListItemText primary="Accueil" />
                 </ListItem>
+                <ListItem component={Link} to="/reko">
+                  <ListItemIcon>
+                    <Face />
+                  </ListItemIcon>
+                  <ListItemText primary="Reko" />
+                </ListItem>
                 <ListItem component={Link} to="/upload">
                   <ListItemIcon>
                     <CloudUpload />
@@ -144,6 +150,7 @@ const App = () => {
           <div className={classes.toolbar} />
           <Switch>
             <Route exact path="/" render={() => <Root />} />
+            <Route path="/reko" render={() => <Reko />} />
             <Route path="/upload" render={() => <Upload />} />
           </Switch>
         </main>
