@@ -4,9 +4,14 @@
             "name": "/upload",
             "lambdaFunction": "lambdaupload",
             "privacy": {
-                "open": true
-            },
-            "policyResourceName": "/upload"
+                "private": true,
+                "auth": [
+                    "/POST",
+                    "/GET",
+                    "/PUT",
+                    "/PATCH"
+                ]
+            }
         }
     ],
     "resourceName": "apiBbassYnov",
@@ -17,7 +22,7 @@
         }
     ],
     "privacy": {
-        "auth": 0,
+        "auth": 1,
         "unauth": 0,
         "authRoleName": "amplify-bbaas-dev-94023-authRole",
         "unAuthRoleName": "amplify-bbaas-dev-94023-unauthRole"
@@ -31,5 +36,6 @@
                 "Arn"
             ]
         }
-    ]
+    ],
+    "uuid": "2a806491"
 }

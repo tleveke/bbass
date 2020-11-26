@@ -3,6 +3,10 @@
     "dynamobbaas": {
       "service": "DynamoDB",
       "providerPlugin": "awscloudformation"
+    },
+    "s3209af783": {
+      "service": "S3",
+      "providerPlugin": "awscloudformation"
     }
   },
   "function": {
