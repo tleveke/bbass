@@ -15,30 +15,22 @@ See the License for the specific language governing permissions and limitations 
 
 
 const AWS = require('aws-sdk')
-var awsServerlessExpressMiddleware = require('aws-serverless-express/middleware')
-var bodyParser = require('body-parser')
-var express = require('express')
+const express = require('express')
+const bodyParser = require('body-parser')
+const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware')
+const { v4: uuidv4 } = require('uuid')
+
+const s3 = new AWS.S3()
+const dynamoDb = new AWS.DynamoDB.DocumentClient()
 
 AWS.config.update({ region: process.env.TABLE_REGION });
 
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 
 let tableName = "dynamobbaas";
-if(process.env.ENV && process.env.ENV !== "NONE") {
-  tableName = tableName + '-' + process.env.ENV;
+if (process.env.ENV && process.env.ENV !== 'NONE') {
+  TableName = TableName + '-' + process.env.ENV
 }
-
-const userIdPresent = false; // TODO: update in case is required to use that definition
-const partitionKeyName = "file";
-const partitionKeyType = "S";
-const sortKeyName = "";
-const sortKeyType = "";
-const hasSortKey = sortKeyName !== "";
-const path = "/upload";
-const UNAUTH = 'UNAUTH';
-const hashKeyPath = '/:' + partitionKeyName;
-const sortKeyPath = hasSortKey ? '/:' + sortKeyName : '';
-// declare a new express app
 var app = express()
 app.use(bodyParser.json())
 app.use(awsServerlessExpressMiddleware.eventContext())
@@ -50,188 +42,89 @@ app.use(function(req, res, next) {
   next()
 });
 
-// convert url string param to expected Type
-const convertUrlType = (param, type) => {
-  switch(type) {
-    case "N":
-      return Number.parseInt(param);
-    default:
-      return param;
-  }
-}
+/// GET methods
 
-/********************************
- * HTTP Get method for list objects *
- ********************************/
-
-app.get(path + hashKeyPath, function(req, res) {
-  var condition = {}
-  condition[partitionKeyName] = {
-    ComparisonOperator: 'EQ'
-  }
-
-  if (userIdPresent && req.apiGateway) {
-    condition[partitionKeyName]['AttributeValueList'] = [req.apiGateway.event.requestContext.identity.cognitoIdentityId || UNAUTH ];
-  } else {
-    try {
-      condition[partitionKeyName]['AttributeValueList'] = [ convertUrlType(req.params[partitionKeyName], partitionKeyType) ];
-    } catch(err) {
-      res.statusCode = 500;
-      res.json({error: 'Wrong column type ' + err});
-    }
-  }
-
-  let queryParams = {
-    TableName: tableName,
-    KeyConditions: condition
-  }
-
-  dynamodb.query(queryParams, (err, data) => {
-    if (err) {
-      res.statusCode = 500;
-      res.json({error: 'Could not load items: ' + err});
-    } else {
-      res.json(data.Items);
-    }
-  });
-});
-
-/*****************************************
- * HTTP Get method for get single object *
- *****************************************/
-
-app.get(path + '/object' + hashKeyPath + sortKeyPath, function(req, res) {
-  var params = {};
-  if (userIdPresent && req.apiGateway) {
-    params[partitionKeyName] = req.apiGateway.event.requestContext.identity.cognitoIdentityId || UNAUTH;
-  } else {
-    params[partitionKeyName] = req.params[partitionKeyName];
-    try {
-      params[partitionKeyName] = convertUrlType(req.params[partitionKeyName], partitionKeyType);
-    } catch(err) {
-      res.statusCode = 500;
-      res.json({error: 'Wrong column type ' + err});
-    }
-  }
-  if (hasSortKey) {
-    try {
-      params[sortKeyName] = convertUrlType(req.params[sortKeyName], sortKeyType);
-    } catch(err) {
-      res.statusCode = 500;
-      res.json({error: 'Wrong column type ' + err});
-    }
-  }
-
-  let getItemParams = {
-    TableName: tableName,
-    Key: params
-  }
-
-  dynamodb.get(getItemParams,(err, data) => {
-    if(err) {
-      res.statusCode = 500;
-      res.json({error: 'Could not load items: ' + err.message});
-    } else {
-      if (data.Item) {
-        res.json(data.Item);
-      } else {
-        res.json(data) ;
+app.get('/upload/:user', async (req, res) => {
+  try {
+    const queryByUserParams = {
+      TableName,
+      IndexName: 'CognitoUser-index',
+      KeyConditionExpression: 'CognitoUser = :u',
+      ExpressionAttributeValues: {
+        ':u': req.params.user
       }
     }
-  });
-});
-
-
-/************************************
-* HTTP put method for insert object *
-*************************************/
-
-app.put(path, function(req, res) {
-
-  if (userIdPresent) {
-    req.body['userId'] = req.apiGateway.event.requestContext.identity.cognitoIdentityId || UNAUTH;
-  }
-
-  let putItemParams = {
-    TableName: tableName,
-    Item: req.body
-  }
-  dynamodb.put(putItemParams, (err, data) => {
-    if(err) {
-      res.statusCode = 500;
-      res.json({error: err, url: req.url, body: req.body});
-    } else{
-      res.json({success: 'put call succeed!', url: req.url, data: data})
+    const queryResult = await dynamoDb.query(queryByUserParams).promise()
+    let files = []
+    queryResult.Items.forEach((item) => files.push(item.file))
+    const params = {
+      Bucket: process.env.STORAGE_S3209AF783_BUCKETNAME
     }
-  });
-});
+    s3.listObjectsV2(params, async (err, data) => {
+      if (err) {
+        console.log(err, err.stack)
+        res.json({ error: 'cannot get your picture', err, stack: err.stack })
+      } else {
+        let results = []
+        for (image of data.Contents) {
+          // Filter S3 objects by user
+          if (files.includes(image.Key)) {
+            const url = await s3.getSignedUrlPromise('getObject', { ...params, Key: image.Key })
+            results.push({ url, key: image.Key })
+          }
+        }
+        res.json({ success: 'get call succeed!', results })
+      }
+    })
+  } catch (err) {
+    console.log(err)
+    res.json({ error: 'cannot query dynamo db', err })
+  }
+})
 
-/************************************
-* HTTP post method for insert object *
-*************************************/
+app.get('/upload/*', (req, res) => {
+  res.json({ status: 403, message: 'unauthorized' })
+})
 
-app.post(path, function(req, res) {
+/// POST methods
 
-  if (userIdPresent) {
-    req.body['userId'] = req.apiGateway.event.requestContext.identity.cognitoIdentityId || UNAUTH;
+app.post('/upload', (req, res) => {
+  const base64Data = new Buffer.from(req.body.file.replace(/^data:image\/\w+;base64,/, ''), 'base64')
+  const type = req.body.file.split(';')[0].split('/')[1]
+
+  const params = {
+    Bucket: process.env.STORAGE_S3209AF783_BUCKETNAME,
+    Key: `${uuidv4()}.jpg`,
+    Body: base64Data,
+    ContentEncoding: 'base64',
+    ContentType: `image/${type}`
   }
 
-  let putItemParams = {
-    TableName: tableName,
-    Item: req.body
-  }
-  dynamodb.put(putItemParams, (err, data) => {
-    if(err) {
-      res.statusCode = 500;
-      res.json({error: err, url: req.url, body: req.body});
-    } else{
-      res.json({success: 'post call succeed!', url: req.url, data: data})
-    }
-  });
-});
-
-/**************************************
-* HTTP remove method to delete object *
-***************************************/
-
-app.delete(path + '/object' + hashKeyPath + sortKeyPath, function(req, res) {
-  var params = {};
-  if (userIdPresent && req.apiGateway) {
-    params[partitionKeyName] = req.apiGateway.event.requestContext.identity.cognitoIdentityId || UNAUTH;
-  } else {
-    params[partitionKeyName] = req.params[partitionKeyName];
-     try {
-      params[partitionKeyName] = convertUrlType(req.params[partitionKeyName], partitionKeyType);
-    } catch(err) {
-      res.statusCode = 500;
-      res.json({error: 'Wrong column type ' + err});
-    }
-  }
-  if (hasSortKey) {
-    try {
-      params[sortKeyName] = convertUrlType(req.params[sortKeyName], sortKeyType);
-    } catch(err) {
-      res.statusCode = 500;
-      res.json({error: 'Wrong column type ' + err});
-    }
-  }
-
-  let removeItemParams = {
-    TableName: tableName,
-    Key: params
-  }
-  dynamodb.delete(removeItemParams, (err, data)=> {
-    if(err) {
-      res.statusCode = 500;
-      res.json({error: err, url: req.url});
+  s3.putObject(params, async (err, data) => {
+    if (err) {
+      console.log(err, err.stack)
+      res.json({ error: 'cannot upload your picture', stack: err.stack })
     } else {
-      res.json({url: req.url, data: data});
+      const putParams = {
+        TableName,
+        Item: {
+          file: params.Key,
+          CognitoUser: req.body.username
+        }
+      }
+      await dynamoDb.put(putParams).promise()
+      res.json({ success: 'post call succeed!', data })
     }
-  });
-});
-app.listen(3000, function() {
-    console.log("App started")
-});
+  })
+})
+
+app.post('/upload/*', (req, res) => {
+  res.json({ status: 403, message: 'unauthorized' })
+})
+
+app.listen(3000, () => {
+  console.log('App started')
+})
 
 // Export the app object. When executing the application local this does nothing. However,
 // to port it to AWS Lambda we will create a wrapper around that will load the app from
