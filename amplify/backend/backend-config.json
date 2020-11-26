@@ -21,11 +21,14 @@
           "attributes": [
             "Name",
             "Arn"
-          ],
-          "attributeEnvMap": {
-            "Name": "TABLE_NAME",
-            "Arn": "TABLE_ARN"
-          }
+          ]
+        },
+        {
+          "category": "storage",
+          "resourceName": "s3209af783",
+          "attributes": [
+            "BucketName"
+          ]
         }
       ]
     }
