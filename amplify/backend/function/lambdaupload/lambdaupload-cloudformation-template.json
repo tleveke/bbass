@@ -90,7 +90,7 @@
         "Timeout": "25",
         "Code": {
           "S3Bucket": "amplify-bbaas-dev-94023-deployment",
-          "S3Key": "amplify-builds/lambdaupload-536b3043326e6445584a-build.zip"
+          "S3Key": "amplify-builds/lambdaupload-4934427579376c47396f-build.zip"
         }
       }
     },
