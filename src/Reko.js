@@ -54,7 +54,13 @@ const Reko = () => {
     }
     const { username } = await Auth.currentAuthenticatedUser()
     console.log(username);
-    const res = await API.get(apiName, `/upload/${username}`, data)
+    const res = await API.get(apiName, `/upload/${username}`, data).then( resp => {
+        console.log(resp);
+        return resp;
+    }).catch(err => {
+        console.log('erreur')
+        console.log(err)
+    });
     if (res?.data?.results) {
       setFiles(res.data.results)
     }

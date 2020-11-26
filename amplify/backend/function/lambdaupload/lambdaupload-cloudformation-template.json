@@ -90,7 +90,7 @@
         "Timeout": "25",
         "Code": {
           "S3Bucket": "amplify-bbaas-dev-94023-deployment",
-          "S3Key": "amplify-builds/lambdaupload-4934427579376c47396f-build.zip"
+          "S3Key": "amplify-builds/lambdaupload-7a69767a7369346b2f64-build.zip"
         }
       }
     },
@@ -259,18 +259,7 @@
                 "s3:ListBucket"
               ],
               "Resource": [
-                {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "arn:aws:s3:::",
-                      {
-                        "Ref": "storages3209af783BucketName"
-                      },
-                      "/*"
-                    ]
-                  ]
-                }
+                "arn:aws:s3:::*"
               ]
             }
           ]
