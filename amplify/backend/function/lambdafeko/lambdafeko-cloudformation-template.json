@@ -101,7 +101,11 @@
         },
         "Runtime": "nodejs12.x",
         "Layers": [],
-        "Timeout": "25"
+        "Timeout": "25",
+        "Code": {
+          "S3Bucket": "amplify-bbaas-dev-94023-deployment",
+          "S3Key": "amplify-builds/lambdafeko-394c4b686e6775764b49-build.zip"
+        }
       }
     },
     "LambdaExecutionRole": {
