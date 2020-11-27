@@ -21,6 +21,14 @@
     "storages3209af783BucketName": {
       "Type": "String",
       "Default": "storages3209af783BucketName"
+    },
+    "apiapiBbassYnovApiName": {
+      "Type": "String",
+      "Default": "apiapiBbassYnovApiName"
+    },
+    "apiapiBbassYnovApiId": {
+      "Type": "String",
+      "Default": "apiapiBbassYnovApiId"
     }
   },
   "Conditions": {
@@ -45,12 +53,12 @@
         "FunctionName": {
           "Fn::If": [
             "ShouldNotCreateEnvResources",
-            "lambdaupload",
+            "lambdafeko",
             {
               "Fn::Join": [
                 "",
                 [
-                  "lambdaupload",
+                  "lambdafeko",
                   "-",
                   {
                     "Ref": "env"
@@ -76,6 +84,12 @@
             },
             "STORAGE_S3209AF783_BUCKETNAME": {
               "Ref": "storages3209af783BucketName"
+            },
+            "API_APIBBASSYNOV_APINAME": {
+              "Ref": "apiapiBbassYnovApiName"
+            },
+            "API_APIBBASSYNOV_APIID": {
+              "Ref": "apiapiBbassYnovApiId"
             }
           }
         },
@@ -87,11 +101,7 @@
         },
         "Runtime": "nodejs12.x",
         "Layers": [],
-        "Timeout": "25",
-        "Code": {
-          "S3Bucket": "amplify-bbaas-dev-94023-deployment",
-          "S3Key": "amplify-builds/lambdaupload-4934427579376c47396f-build.zip"
-        }
+        "Timeout": "25"
       }
     },
     "LambdaExecutionRole": {
@@ -100,12 +110,12 @@
         "RoleName": {
           "Fn::If": [
             "ShouldNotCreateEnvResources",
-            "bbaasLambdaRole16aaa1be",
+            "bbaasLambdaRolee852bf03",
             {
               "Fn::Join": [
                 "",
                 [
-                  "bbaasLambdaRole16aaa1be",
+                  "bbaasLambdaRolee852bf03",
                   "-",
                   {
                     "Ref": "env"
@@ -171,34 +181,6 @@
                   }
                 ]
               }
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "dynamodb:DescribeTable",
-                "dynamodb:GetItem",
-                "dynamodb:Query",
-                "dynamodb:Scan",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:DeleteItem"
-              ],
-              "Resource": [
-                {
-                  "Ref": "storagedynamobbaasArn"
-                },
-                {
-                  "Fn::Join": [
-                    "/",
-                    [
-                      {
-                        "Ref": "storagedynamobbaasArn"
-                      },
-                      "index/*"
-                    ]
-                  ]
-                }
-              ]
             }
           ]
         }
@@ -259,7 +241,47 @@
                 "s3:ListBucket"
               ],
               "Resource": [
-                "arn:aws:s3:::*"
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:s3:::",
+                      {
+                        "Ref": "storages3209af783BucketName"
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "apigateway:POST",
+                "apigateway:PUT",
+                "apigateway:GET",
+                "apigateway:HEAD",
+                "apigateway:OPTIONS",
+                "apigateway:PATCH"
+              ],
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      "::/restapis/",
+                      {
+                        "Ref": "apiapiBbassYnovApiName"
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
               ]
             }
           ]

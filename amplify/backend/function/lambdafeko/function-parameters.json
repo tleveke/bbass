@@ -1,0 +1,24 @@
+{
+  "lambdaLayers": [],
+  "permissions": {
+    "storage": {
+      "dynamobbaas": [
+        "create",
+        "read",
+        "update"
+      ],
+      "s3209af783": [
+        "create",
+        "read",
+        "update"
+      ]
+    },
+    "api": {
+      "apiBbassYnov": [
+        "create",
+        "read",
+        "update"
+      ]
+    }
+  }
+}

@@ -78,15 +78,7 @@ app.get('/upload/:user', async (req, res) => {
     })
   } catch (err) {
     console.log(err)
-    const queryByUserParams = {
-      TableName,
-      IndexName: 'CognitoUser-index',
-      KeyConditionExpression: 'CognitoUser = :u',
-      ExpressionAttributeValues: {
-        ':u': req.params.user
-      }
-    }
-    res.json({ error: 'cannot query dynamo db', queryByUserParams })
+    res.json({ error: 'cannot query dynamo db', err })
   }
 })
 
